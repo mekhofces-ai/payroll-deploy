@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
-from ..database import get_db
+from ..database import get_db, add_audit_log
 from ..auth import check_permission
 from ..services import calculate_bonus_cost
 from ..ui import page_header, fmt_currency, status_badge, divider, footer, apply_custom_css, export_download_link
@@ -21,6 +21,9 @@ def show_calculator():
     page_header("Bonus Calculator", "Calculate bonus cost before and after with full cost analysis")
     if not check_permission('Bonus Calculator', 'View Only'):
         st.error("Access denied."); return
+
+    if 'bonus_result' not in st.session_state:
+        st.session_state.bonus_result = None
 
     with get_db() as db:
         employees = db.execute("SELECT employee_code, arabic_name, new_net_salary, position, department, section, default_project FROM employees WHERE status='Active' ORDER BY employee_code").fetchall()
@@ -62,9 +65,10 @@ def show_calculator():
 
     if calculate:
         with st.spinner("Calculating bonus cost..."):
-            result = calculate_bonus_cost(emp_code, bonus_type, bonus_amount, year, month)
+            st.session_state.bonus_result = calculate_bonus_cost(emp_code, bonus_type, bonus_amount, year, month)
 
-        if result:
+    result = st.session_state.bonus_result
+    if result:
             cost_multiplier = result['comp_cost_diff'] / result['net_increase'] if result['net_increase'] > 0 else 0
 
             st.markdown("""
@@ -122,9 +126,12 @@ def show_calculator():
             savec1, savec2, savec3 = st.columns(3)
             with savec1:
                 if st.button("💾 Save as Actual Bonus", use_container_width=True):
-                    with get_db() as db:
-                        emp_db = db.execute("SELECT * FROM employees WHERE employee_code=?", (emp_code,)).fetchone()
-                        if emp_db:
+                    try:
+                        with get_db() as db:
+                            emp_db = db.execute("SELECT * FROM employees WHERE employee_code=?", (emp_code,)).fetchone()
+                            if not emp_db:
+                                st.error("Employee not found.")
+                                st.stop()
                             db.execute('''INSERT INTO employee_bonuses 
                                 (employee_code, arabic_name, organization, sponsor, position, department, section,
                                  default_project, bonus_project, year, month, bonus_date, bonus_type, bonus_category,
@@ -146,8 +153,12 @@ def show_calculator():
                                         result['net_before'], result['net_after'], result['net_increase'],
                                         result['comp_cost_before'], result['comp_cost_after'], result['comp_cost_diff'],
                                         bonus_reason, st.session_state.get('user',{}).get('username','system')))
+                            add_audit_log(db, 'Created', 'Bonus', 'employee_bonuses', f"{emp_code} - E£{bonus_amount:,.2f}", st.session_state.get('user',{}).get('username','system'))
                             st.success("✅ Bonus saved as actual bonus record.")
+                            st.session_state.bonus_result = None
                             st.rerun()
+                    except Exception as e:
+                        st.error(f"Error saving bonus: {e}")
 
             with savec2:
                 if st.button("💾 Save as Simulation", use_container_width=True):
