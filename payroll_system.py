@@ -15,7 +15,7 @@ import os
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from payroll_app.database import DatabaseManager, get_db
+from payroll_app.database import DatabaseManager, get_db, add_audit_log
 from payroll_app.auth import authenticate, get_user_permissions, get_sidebar_menu, can_view_salary, can_view_company_cost
 from payroll_app.ui import apply_custom_css, page_header, footer, fmt_currency, status_badge
 from payroll_app.config import APP_NAME, APP_VERSION, CURRENCY_SYMBOL
@@ -127,6 +127,8 @@ def main_app():
         col1, col2 = st.columns(2)
         with col1:
             if st.button("🔒 Logout", use_container_width=True):
+                with get_db() as db:
+                    add_audit_log(db, 'Logout', 'Login', username=st.session_state.user.get('username'))
                 st.session_state.authenticated = False
                 st.session_state.user = None
                 st.session_state.page = "Login"

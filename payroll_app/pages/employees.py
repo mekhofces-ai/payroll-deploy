@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
-from ..database import get_db
+from ..database import get_db, add_audit_log
 from ..auth import check_permission, can_view_salary
 from ..services import calculate_payroll_for_employee, get_employee_allocations_summary
 from ..ui import page_header, fmt_currency, status_badge, divider, footer, apply_custom_css
@@ -154,6 +154,9 @@ def show_employee_form(emp):
                                (org, sponsor, arabic, english, pos, dept, section, default_proj, hire_date,
                                 basic_salary, new_net, new_allow, new_earning, ins_base, bank_name, bank_account,
                                 status, notes, code))
+                    username = st.session_state.get('user', {}).get('username', 'system')
+                    add_audit_log(db, 'Updated', 'Employee', 'employees', code,
+                                  username=username, reason='Employee details updated')
                     st.success(f"Employee {code} updated.")
                 else:
                     try:
@@ -181,6 +184,8 @@ def show_employee_form(emp):
                                     VALUES (?, 'Housing Allowance', 'Housing Allowance', ?, 'Fixed Amount', 'Net', 'Yes', 'No', 'Monthly', 'Active')''',
                                            (code, new_allow))
 
+                        add_audit_log(db, 'Created', 'Employee', 'employees', code,
+                                      username=username, reason='Employee created')
                         st.success(f"Employee {code} added.")
                     except Exception as ex:
                         st.error(f"Error: {ex}")

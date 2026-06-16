@@ -29,6 +29,22 @@ def get_db():
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
 
+def add_audit_log(db, action, module, table_name=None, record_id=None,
+                  old_values=None, new_values=None, changed_fields=None,
+                  username=None, reason=None, approval_ref=None):
+    username = username or 'system'
+    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    old_str = json.dumps(old_values, ensure_ascii=False, default=str) if old_values else None
+    new_str = json.dumps(new_values, ensure_ascii=False, default=str) if new_values else None
+    fields_str = json.dumps(changed_fields, ensure_ascii=False) if changed_fields else None
+    db.execute('''INSERT INTO audit_log 
+        (action, module, table_name, record_id, old_values, new_values, changed_fields,
+         username, timestamp, reason, approval_ref)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?)''',
+               (action, module, table_name, str(record_id) if record_id else None,
+                old_str, new_str, fields_str,
+                username, timestamp, reason, approval_ref))
+
 class DatabaseManager:
     def __init__(self):
         self.conn = get_conn()

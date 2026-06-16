@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import json
 from datetime import datetime
-from ..database import get_db
+from ..database import get_db, add_audit_log
 from ..auth import check_permission
 from ..config import TAX_LAW_175, TAX_CURRENT, DEFAULT_INSURANCE
 from ..ui import page_header, fmt_currency, status_badge, divider, footer, apply_custom_css, export_download_link
@@ -123,6 +123,9 @@ def show_tax_laws():
                             db.execute("UPDATE tax_laws SET is_default=0")
                         db.execute("UPDATE tax_laws SET name=?, law_number=?, effective_from=?, is_default=? WHERE id=?",
                                   (name, law_no, eff_from, int(is_default), l['id']))
+                    add_audit_log(db, 'Updated', 'Setup', 'tax_laws', l['id'],
+                                  username=st.session_state.get('user',{}).get('username','system'),
+                                  reason=f'Tax law updated: {name}')
                     st.success("Tax law updated.")
                     st.rerun()
 
@@ -168,6 +171,9 @@ def show_tax_brackets():
                         with get_db() as db2:
                             db2.execute("UPDATE tax_brackets SET income_from=?, income_to=?, tax_rate=?, bracket_order=? WHERE id=?",
                                        (inc_from, inc_to, rate, order, b['id']))
+                            add_audit_log(db2, 'Updated', 'Setup', 'tax_brackets', b['id'],
+                                          username=st.session_state.get('user',{}).get('username','system'),
+                                          reason=f'Bracket {b["bracket_order"]}: {inc_from}-{inc_to} @ {rate*100:.1f}%')
                         st.success("Bracket updated.")
                         st.rerun()
         else:
@@ -213,6 +219,9 @@ def show_exemptions():
                 with get_db() as db2:
                     db2.execute("UPDATE tax_exemptions SET personal_exemption_annual=?, additional_exemption_annual=?, tax_free_bracket_annual=?, total_annual_exemption=?, round_down_to_10=? WHERE id=?",
                                (personal, additional, tax_free, total, int(round_down), e['id']))
+                    add_audit_log(db2, 'Updated', 'Setup', 'tax_exemptions', e['id'],
+                                  username=st.session_state.get('user',{}).get('username','system'),
+                                  reason=f'Exemption year {e["year"]}: personal={personal}')
                 st.success("Exemption updated.")
                 st.rerun()
 
@@ -246,6 +255,9 @@ def show_insurance():
                 with get_db() as db2:
                     db2.execute("UPDATE social_insurance_setup SET min_insurance_salary=?, max_insurance_salary=?, employee_share_pct=?, company_share_pct=?, insurance_base_source=?, effective_from=? WHERE id=?",
                                (min_sal, max_sal, emp_share, comp_share, base_source, eff_from, si['id']))
+                    add_audit_log(db2, 'Updated', 'Setup', 'social_insurance_setup', si['id'],
+                                  username=st.session_state.get('user',{}).get('username','system'),
+                                  reason=f'Insurance setup year {si["year"]} updated')
                 st.success("Insurance setup updated.")
                 st.rerun()
 
@@ -349,6 +361,9 @@ def show_salary_rules():
                             min_insurance_salary=?, max_insurance_salary=?, 
                             employee_share_pct=?, company_share_pct=? WHERE id=?''',
                                    (min_sal, max_sal, emp_share, comp_share, current_ins['id']))
+                    add_audit_log(db2, 'Updated', 'Setup', 'salary_calculation_setup', s['id'],
+                                  username=st.session_state.get('user',{}).get('username','system'),
+                                  reason=f'Salary & insurance rules updated: basic={basic_source}, ins={ins_source}')
                 st.success("All rules saved successfully.")
                 st.rerun()
 

@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
-from ..database import get_db, hash_password
+from ..database import get_db, hash_password, add_audit_log
 from ..auth import check_permission, get_user_permissions
 from ..config import PERMISSION_MODULES, ACCESS_LEVELS
 from ..ui import page_header, fmt_currency, status_badge, divider, footer, apply_custom_css
@@ -47,6 +47,9 @@ def show_users():
                                 VALUES (?,?,?,?,?,?,?,?)''',
                                        (full_name, username, email, mobile, hash_password(password), role, status,
                                         st.session_state.get('user',{}).get('username','system')))
+                            add_audit_log(db, 'Created', 'User', 'users', username,
+                                          username=st.session_state.get('user',{}).get('username','system'),
+                                          reason=f'User {username} created with role {role}')
                             st.success(f"User {username} created.")
                             st.rerun()
 
@@ -110,6 +113,9 @@ def show_users():
                                             int(can_bonus), int(can_export), u['user_id']))
                                 if new_password:
                                     db.execute("UPDATE users SET password_hash=? WHERE user_id=?", (hash_password(new_password), u['user_id']))
+                            add_audit_log(db, 'Updated', 'User', 'users', u['username'],
+                                          username=st.session_state.get('user',{}).get('username','system'),
+                                          reason=f'User {u["username"]} updated')
                             st.success("User updated.")
                             st.rerun()
 
@@ -146,6 +152,9 @@ def show_roles():
                                     db2.execute("UPDATE role_permissions SET access_level=? WHERE id=?", (level, existing['id']))
                                 else:
                                     db2.execute("INSERT INTO role_permissions (role_id, permission_id, access_level) VALUES (?,?,?)", (r['id'], perm['id'], level))
+                    add_audit_log(db2, 'Updated', 'Permission', 'role_permissions', r['id'],
+                                  username=st.session_state.get('user',{}).get('username','system'),
+                                  reason=f'Role permissions updated for {r["name"]}')
                     st.success("Role permissions updated.")
                     st.rerun()
 

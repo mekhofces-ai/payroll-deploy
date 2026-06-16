@@ -1,18 +1,20 @@
 import streamlit as st
 from datetime import datetime, timedelta
-from .database import get_db, hash_password
+from .database import get_db, hash_password, add_audit_log
 from .config import PERMISSION_MODULES, ACCESS_LEVELS
 
 def authenticate(username, password):
     with get_db() as db:
         user = db.execute("SELECT * FROM users WHERE username=? AND status='Active'", (username,)).fetchone()
         if not user:
+            add_audit_log(db, 'Login', 'Login', username=username, reason='User not found')
             return None, "User not found"
 
         if user['locked_until']:
             try:
                 locked = datetime.strptime(user['locked_until'], '%Y-%m-%d %H:%M:%S')
                 if locked > datetime.now():
+                    add_audit_log(db, 'Login', 'Login', username=username, reason='Account locked')
                     return None, f"Account locked until {locked.strftime('%Y-%m-%d %H:%M:%S')}. Contact admin."
             except:
                 pass
@@ -23,11 +25,14 @@ def authenticate(username, password):
             if attempts >= 5:
                 lock_time = (datetime.now() + timedelta(minutes=30)).strftime('%Y-%m-%d %H:%M:%S')
                 db.execute("UPDATE users SET locked_until=? WHERE username=?", (lock_time, username))
+                add_audit_log(db, 'Login', 'Login', username=username, reason='Account locked after 5 failed attempts')
                 return None, "Account locked after 5 failed attempts. Try again in 30 minutes."
+            add_audit_log(db, 'Login', 'Login', username=username, reason=f'Invalid password attempt {attempts}/5')
             return None, f"Invalid password. Attempt {attempts}/5."
 
         db.execute("UPDATE users SET last_login=datetime('now','localtime'), login_attempts=0, locked_until=NULL WHERE username=?",
                    (username,))
+        add_audit_log(db, 'Login', 'Login', username=username, reason='Login successful')
         return dict(user), "Success"
 
 def change_password(user_id, old_password, new_password):

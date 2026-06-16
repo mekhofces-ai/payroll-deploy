@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
-from ..database import get_db
+from ..database import get_db, add_audit_log
 from ..auth import check_permission, can_view_salary, can_view_company_cost
 from ..services import generate_payroll, recalculate_payroll, calculate_payroll_for_employee, net_to_gross
 from ..ui import page_header, fmt_currency, status_badge, divider, footer, apply_custom_css, export_download_link
@@ -59,6 +59,10 @@ def show_payroll_run_center():
                     df = dept_filter if dept_filter != "All" else None
                     sf = sponsor_filter if sponsor_filter != "All" else None
                     results = generate_payroll(year, month, pf, df, sf)
+                    with get_db() as db2:
+                        add_audit_log(db2, 'Generated', 'Payroll', 'payroll_transactions',
+                                      f'{year}-{month}', username=st.session_state.get('user',{}).get('username','system'),
+                                      reason=f'Payroll generated for {len(results)} employees')
                     st.success(f"Payroll generated for {len(results)} employees.")
                     st.rerun()
     with col2:
@@ -67,12 +71,19 @@ def show_payroll_run_center():
                 st.error("No permission.")
             else:
                 recalculate_payroll(year, month)
+                with get_db() as db2:
+                    add_audit_log(db2, 'Updated', 'Payroll', 'payroll_transactions',
+                                  f'{year}-{month}', username=st.session_state.get('user',{}).get('username','system'),
+                                  reason='Payroll recalculated')
                 st.success("Payroll recalculated.")
                 st.rerun()
     with col3:
         if st.button("📋 Submit for Approval", use_container_width=True, type="secondary"):
             with get_db() as db:
                 db.execute("UPDATE payroll_runs SET status='Submitted' WHERE year=? AND month=?", (year, month))
+                add_audit_log(db, 'Submitted', 'Payroll', 'payroll_runs',
+                              f'{year}-{month}', username=st.session_state.get('user',{}).get('username','system'),
+                              reason='Payroll submitted for approval')
                 st.success("Submitted for approval.")
                 st.rerun()
     with col4:
@@ -82,6 +93,9 @@ def show_payroll_run_center():
                 with get_db() as db2:
                     db2.execute("UPDATE payroll_runs SET status='Closed' WHERE id=?", (run['id'],))
                     db2.execute("UPDATE payroll_transactions SET approval_status='Approved' WHERE year=? AND month=?", (year, month))
+                    add_audit_log(db2, 'Approved', 'Payroll', 'payroll_transactions',
+                                  f'{year}-{month}', username=st.session_state.get('user',{}).get('username','system'),
+                                  reason='Payroll approved and closed')
                 st.success("Payroll closed.")
                 st.rerun()
 
@@ -301,6 +315,7 @@ def show_bank_transfer():
 
                 if st.button("✅ Mark as Transferred"):
                     with get_db() as db2:
+                        cnt = 0
                         for t in transactions:
                             t = dict(t)
                             if t.get('bank_account'):
@@ -308,6 +323,10 @@ def show_bank_transfer():
                                     transfer_date=datetime('now','localtime'), transfer_ref=? 
                                     WHERE employee_code=? AND year=? AND month=?''',
                                            (f"TFR-{year}{month:02d}-{t['employee_code']}", t['employee_code'], year, month))
+                                cnt += 1
+                        add_audit_log(db2, 'Transferred', 'Payroll', 'payroll_transactions',
+                                      f'{year}-{month}', username=st.session_state.get('user',{}).get('username','system'),
+                                      reason=f'{cnt} employees marked as transferred')
                     st.success("Marked as transferred.")
                     st.rerun()
             else:
