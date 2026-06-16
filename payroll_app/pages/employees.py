@@ -145,6 +145,7 @@ def show_employee_form(emp):
                 return
             new_earning = new_net + new_allow
             with get_db() as db:
+                username = st.session_state.get('user', {}).get('username', 'system')
                 if emp:
                     db.execute('''UPDATE employees SET organization=?, sponsor=?, arabic_name=?, english_name=?,
                         position=?, department=?, section=?, default_project=?, hiring_date=?, basic_salary=?,
@@ -154,7 +155,6 @@ def show_employee_form(emp):
                                (org, sponsor, arabic, english, pos, dept, section, default_proj, hire_date,
                                 basic_salary, new_net, new_allow, new_earning, ins_base, bank_name, bank_account,
                                 status, notes, code))
-                    username = st.session_state.get('user', {}).get('username', 'system')
                     add_audit_log(db, 'Updated', 'Employee', 'employees', code,
                                   username=username, reason='Employee details updated')
                     st.success(f"Employee {code} updated.")
@@ -260,14 +260,13 @@ def show_allowance_form(allow, emp_options, allowance_types):
                 if allow:
                     db.execute('''UPDATE employee_allowances SET allowance_type=?, amount=?, payment_type=?, taxable=?, recurring=?, status=? WHERE id=?''',
                                (atype, amount, payment_type, taxable, recurring, status, allow['id']))
-                    st.success("Allowance updated.")
                 else:
                     actual_code = emp_options.get(emp_code, '') if not allow else allow['employee_code']
                     db.execute('''INSERT INTO employee_allowances (employee_code, allowance_type, allowance_name, amount, calc_type, payment_type, taxable, insurance_applicable, recurring, status)
                         VALUES (?,?,?,?,'Fixed Amount',?,?,'No',?,'Active')''',
                                (actual_code, atype, atype, amount, payment_type, taxable, recurring))
-                    st.success("Allowance added.")
-                st.rerun()
+            st.success("Allowance updated." if allow else "Allowance added.")
+            st.rerun()
 
 def show_allocation():
     page_header("Project Allocation", "Manage employee project allocations")
@@ -323,8 +322,8 @@ def show_allocation_form(alloc, emp_code, projects):
                 else:
                     db.execute('''INSERT INTO employee_project_allocations (employee_code, project_code, percentage, is_primary, status)
                         VALUES (?,?,?,?, 'Active')''', (emp_code, proj, pct, int(is_primary)))
-                st.success("Allocation saved.")
-                st.rerun()
+            st.success("Allocation saved.")
+            st.rerun()
 
 def show_salary_revisions():
     page_header("Salary Revisions", "Employee salary change history")
@@ -397,8 +396,8 @@ def show_revision_form(rev, employees):
                     db.execute('''UPDATE employees SET new_net_salary=?, new_allowance=?, new_net_earning=?, 
                         basic_salary=?, updated_at=datetime('now','localtime') WHERE employee_code=?''',
                                (new_net, new_allowance, new_net_earning, new_basic, actual_code))
-                st.success("Salary revision saved.")
-                st.rerun()
+            st.success("Salary revision saved.")
+            st.rerun()
 
 def show_documents():
     page_header("Employee Documents", "Manage employee documents")
