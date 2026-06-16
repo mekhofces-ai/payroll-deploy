@@ -69,115 +69,115 @@ def show_calculator():
 
     result = st.session_state.bonus_result
     if result:
-            cost_multiplier = result['comp_cost_diff'] / result['net_increase'] if result['net_increase'] > 0 else 0
+        cost_multiplier = result['comp_cost_diff'] / result['net_increase'] if result['net_increase'] > 0 else 0
 
-            st.markdown("""
-            <div style="background:linear-gradient(135deg,#667eea15,#764ba215);padding:1.5rem;border-radius:16px;border:1px solid #667eea30;margin:1rem 0">
-            """, unsafe_allow_html=True)
+        st.markdown("""
+        <div style="background:linear-gradient(135deg,#667eea15,#764ba215);padding:1.5rem;border-radius:16px;border:1px solid #667eea30;margin:1rem 0">
+        """, unsafe_allow_html=True)
 
-            c1, c2, c3, c4 = st.columns(4)
-            with c1:
-                st.metric("Bonus Amount Entered", fmt_currency(result['bonus_amount_entered']),
-                         delta=f"{result['bonus_type']}")
-            with c2:
-                st.metric("Net Increase to Employee", fmt_currency(result['net_increase']))
-            with c3:
-                st.metric("Gross Amount Needed", fmt_currency(result['gross_diff']),
-                         delta=f"Gross-up: {((result['gross_diff']/result['net_increase']-1)*100):.1f}%" if result['net_increase'] > 0 else None)
-            with c4:
-                st.metric("Total Company Cost Impact", fmt_currency(result['comp_cost_diff']),
-                         delta=f"{cost_multiplier:.2f}x multiplier", delta_color="inverse")
+        c1, c2, c3, c4 = st.columns(4)
+        with c1:
+            st.metric("Bonus Amount Entered", fmt_currency(result['bonus_amount_entered']),
+                     delta=f"{result['bonus_type']}")
+        with c2:
+            st.metric("Net Increase to Employee", fmt_currency(result['net_increase']))
+        with c3:
+            st.metric("Gross Amount Needed", fmt_currency(result['gross_diff']),
+                     delta=f"Gross-up: {((result['gross_diff']/result['net_increase']-1)*100):.1f}%" if result['net_increase'] > 0 else None)
+        with c4:
+            st.metric("Total Company Cost Impact", fmt_currency(result['comp_cost_diff']),
+                     delta=f"{cost_multiplier:.2f}x multiplier", delta_color="inverse")
 
-            st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
-            st.subheader("Before / After Comparison")
-            comparison_data = {
-                'Metric': ['Net Salary', 'Gross Salary', 'Monthly Tax', 'Employee Insurance', 'Company Insurance', 'Total Company Cost'],
-                'Before Bonus': [fmt_currency(result['net_before']), fmt_currency(result['gross_before']),
-                                fmt_currency(result['tax_before']), fmt_currency(result['emp_ins_before']),
-                                fmt_currency(result['comp_ins_before']), fmt_currency(result['comp_cost_before'])],
-                'After Bonus': [fmt_currency(result['net_after']), fmt_currency(result['gross_after']),
-                               fmt_currency(result['tax_after']), fmt_currency(result['emp_ins_after']),
-                               fmt_currency(result['comp_ins_after']), fmt_currency(result['comp_cost_after'])],
-                'Difference': [fmt_currency(result['net_increase']), fmt_currency(result['gross_diff']),
-                              fmt_currency(result['tax_diff']), fmt_currency(result['emp_ins_diff']),
-                              fmt_currency(result['comp_ins_diff']), fmt_currency(result['comp_cost_diff'])],
-            }
-            st.dataframe(pd.DataFrame(comparison_data), use_container_width=True, hide_index=True)
+        st.subheader("Before / After Comparison")
+        comparison_data = {
+            'Metric': ['Net Salary', 'Gross Salary', 'Monthly Tax', 'Employee Insurance', 'Company Insurance', 'Total Company Cost'],
+            'Before Bonus': [fmt_currency(result['net_before']), fmt_currency(result['gross_before']),
+                            fmt_currency(result['tax_before']), fmt_currency(result['emp_ins_before']),
+                            fmt_currency(result['comp_ins_before']), fmt_currency(result['comp_cost_before'])],
+            'After Bonus': [fmt_currency(result['net_after']), fmt_currency(result['gross_after']),
+                           fmt_currency(result['tax_after']), fmt_currency(result['emp_ins_after']),
+                           fmt_currency(result['comp_ins_after']), fmt_currency(result['comp_cost_after'])],
+            'Difference': [fmt_currency(result['net_increase']), fmt_currency(result['gross_diff']),
+                          fmt_currency(result['tax_diff']), fmt_currency(result['emp_ins_diff']),
+                          fmt_currency(result['comp_ins_diff']), fmt_currency(result['comp_cost_diff'])],
+        }
+        st.dataframe(pd.DataFrame(comparison_data), use_container_width=True, hide_index=True)
 
-            with st.expander("📊 Detailed Cost Breakdown"):
-                detail_cols = st.columns(2)
-                with detail_cols[0]:
-                    st.markdown("**Net Bonus Details**" if result['bonus_type'] == 'Net Bonus' else "**Gross Bonus Details**")
-                    st.write(f"Bonus Type: {result['bonus_type']}")
-                    st.write(f"Entered Amount: {fmt_currency(result['bonus_amount_entered'])}")
-                    st.write(f"Net Bonus Amount: {fmt_currency(result['net_bonus_amount'])}")
-                    st.write(f"Gross Bonus Amount: {fmt_currency(result['gross_bonus_amount'])}")
-                with detail_cols[1]:
-                    st.markdown("**Cost Analysis**")
-                    st.write(f"Net Increase to Employee: {fmt_currency(result['net_increase'])}")
-                    st.write(f"Company Cost Before: {fmt_currency(result['comp_cost_before'])}")
-                    st.write(f"Company Cost After: {fmt_currency(result['comp_cost_after'])}")
-                    st.write(f"Company Cost Difference: **{fmt_currency(result['comp_cost_diff'])}**")
-                    st.write(f"Cost Multiplier: **{cost_multiplier:.2f}x**")
-                    st.write(f"(Every E£1 net to employee costs company E£{cost_multiplier:.2f})")
+        with st.expander("📊 Detailed Cost Breakdown"):
+            detail_cols = st.columns(2)
+            with detail_cols[0]:
+                st.markdown("**Net Bonus Details**" if result['bonus_type'] == 'Net Bonus' else "**Gross Bonus Details**")
+                st.write(f"Bonus Type: {result['bonus_type']}")
+                st.write(f"Entered Amount: {fmt_currency(result['bonus_amount_entered'])}")
+                st.write(f"net Bonus Amount: {fmt_currency(result['net_bonus_amount'])}")
+                st.write(f"Gross Bonus Amount: {fmt_currency(result['gross_bonus_amount'])}")
+            with detail_cols[1]:
+                st.markdown("**Cost Analysis**")
+                st.write(f"Net Increase to Employee: {fmt_currency(result['net_increase'])}")
+                st.write(f"Company Cost Before: {fmt_currency(result['comp_cost_before'])}")
+                st.write(f"Company Cost After: {fmt_currency(result['comp_cost_after'])}")
+                st.write(f"Company Cost Difference: **{fmt_currency(result['comp_cost_diff'])}**")
+                st.write(f"Cost Multiplier: **{cost_multiplier:.2f}x**")
+                st.write(f"(Every E£1 net to employee costs company E£{cost_multiplier:.2f})")
 
-            st.subheader("Save Bonus")
-            savec1, savec2, savec3 = st.columns(3)
-            with savec1:
-                if st.button("💾 Save as Actual Bonus", use_container_width=True):
-                    try:
-                        with get_db() as db:
-                            emp_db = db.execute("SELECT * FROM employees WHERE employee_code=?", (emp_code,)).fetchone()
-                            if not emp_db:
-                                st.error("Employee not found.")
-                                st.stop()
-                            db.execute('''INSERT INTO employee_bonuses 
-                                (employee_code, arabic_name, organization, sponsor, position, department, section,
-                                 default_project, bonus_project, year, month, bonus_date, bonus_type, bonus_category,
-                                 bonus_amount_entered, net_bonus_amount, gross_bonus_amount,
-                                 tax_before, tax_after, tax_diff, emp_ins_before, emp_ins_after, emp_ins_diff,
-                                 comp_ins_before, comp_ins_after, comp_ins_diff, gross_before, gross_after, gross_diff,
-                                 net_before, net_after, net_increase, comp_cost_before, comp_cost_after, comp_cost_diff,
-                                 payment_status, approval_status, reason, created_by)
-                                VALUES (?,?,?,?,?,?,?,?,?,?,?,datetime('now','localtime'),?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'Planned','Draft',?,?)''',
-                                       (emp_code, result['arabic_name'], emp_db['organization'], emp_db['sponsor'],
-                                        emp_db['position'], emp_db['department'], emp_db['section'],
-                                        emp_db['default_project'], emp_db['default_project'],
-                                        year, month, bonus_type, bonus_category, bonus_amount,
-                                        result['net_bonus_amount'], result['gross_bonus_amount'],
-                                        result['tax_before'], result['tax_after'], result['tax_diff'],
-                                        result['emp_ins_before'], result['emp_ins_after'], result['emp_ins_diff'],
-                                        result['comp_ins_before'], result['comp_ins_after'], result['comp_ins_diff'],
-                                        result['gross_before'], result['gross_after'], result['gross_diff'],
-                                        result['net_before'], result['net_after'], result['net_increase'],
-                                        result['comp_cost_before'], result['comp_cost_after'], result['comp_cost_diff'],
-                                        bonus_reason, st.session_state.get('user',{}).get('username','system')))
-                            add_audit_log(db, 'Created', 'Bonus', 'employee_bonuses', f"{emp_code} - E£{bonus_amount:,.2f}", st.session_state.get('user',{}).get('username','system'))
-                            st.success("✅ Bonus saved as actual bonus record.")
-                            st.session_state.bonus_result = None
-                            st.rerun()
-                    except Exception as e:
-                        st.error(f"Error saving bonus: {e}")
-
-            with savec2:
-                if st.button("💾 Save as Simulation", use_container_width=True):
+        st.subheader("Save Bonus")
+        savec1, savec2, savec3 = st.columns(3)
+        with savec1:
+            if st.button("💾 Save as Actual Bonus", use_container_width=True):
+                try:
                     with get_db() as db:
-                        db.execute("INSERT INTO bonus_simulations (employee_code, bonus_type, amount, result_data, created_by) VALUES (?,?,?,?,?)",
-                                   (emp_code, bonus_type, bonus_amount, str(result), st.session_state.get('user',{}).get('username','system')))
-                    st.success("✅ Simulation saved.")
+                        emp_db = db.execute("SELECT * FROM employees WHERE employee_code=?", (emp_code,)).fetchone()
+                        if not emp_db:
+                            st.error("Employee not found.")
+                            st.stop()
+                        db.execute('''INSERT INTO employee_bonuses 
+                            (employee_code, arabic_name, organization, sponsor, position, department, section,
+                             default_project, bonus_project, year, month, bonus_date, bonus_type, bonus_category,
+                             bonus_amount_entered, net_bonus_amount, gross_bonus_amount,
+                             tax_before, tax_after, tax_diff, emp_ins_before, emp_ins_after, emp_ins_diff,
+                             comp_ins_before, comp_ins_after, comp_ins_diff, gross_before, gross_after, gross_diff,
+                             net_before, net_after, net_increase, comp_cost_before, comp_cost_after, comp_cost_diff,
+                             payment_status, approval_status, reason, created_by)
+                            VALUES (?,?,?,?,?,?,?,?,?,?,?,datetime('now','localtime'),?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'Planned','Draft',?,?)''',
+                                   (emp_code, result['arabic_name'], emp_db['organization'], emp_db['sponsor'],
+                                    emp_db['position'], emp_db['department'], emp_db['section'],
+                                    emp_db['default_project'], emp_db['default_project'],
+                                    year, month, bonus_type, bonus_category, bonus_amount,
+                                    result['net_bonus_amount'], result['gross_bonus_amount'],
+                                    result['tax_before'], result['tax_after'], result['tax_diff'],
+                                    result['emp_ins_before'], result['emp_ins_after'], result['emp_ins_diff'],
+                                    result['comp_ins_before'], result['comp_ins_after'], result['comp_ins_diff'],
+                                    result['gross_before'], result['gross_after'], result['gross_diff'],
+                                    result['net_before'], result['net_after'], result['net_increase'],
+                                    result['comp_cost_before'], result['comp_cost_after'], result['comp_cost_diff'],
+                                    bonus_reason, st.session_state.get('user',{}).get('username','system')))
+                        add_audit_log(db, 'Created', 'Bonus', 'employee_bonuses', f"{emp_code} - E£{bonus_amount:,.2f}", st.session_state.get('user',{}).get('username','system'))
+                        st.success("✅ Bonus saved as actual bonus record.")
+                        st.session_state.bonus_result = None
+                        st.rerun()
+                except Exception as e:
+                    st.error(f"Error saving bonus: {e}")
 
-            with savec3:
-                export_df = pd.DataFrame([
-                    {'Metric': 'Bonus Amount', 'Value': bonus_amount, 'After': bonus_amount},
-                    {'Metric': 'Net Before', 'Value': result['net_before'], 'After': result['net_after']},
-                    {'Metric': 'Gross Before', 'Value': result['gross_before'], 'After': result['gross_after']},
-                    {'Metric': 'Tax Before', 'Value': result['tax_before'], 'After': result['tax_after']},
-                    {'Metric': 'Company Insurance Before', 'Value': result['comp_ins_before'], 'After': result['comp_ins_after']},
-                    {'Metric': 'Company Cost Before', 'Value': result['comp_cost_before'], 'After': result['comp_cost_after']},
-                    {'Metric': 'Company Cost Difference', 'Value': 0, 'After': result['comp_cost_diff']},
-                ])
-                export_download_link(export_df, f"bonus_calc_{emp_code}_{year}_{month}.xlsx", "📥 Export to Excel")
+        with savec2:
+            if st.button("💾 Save as Simulation", use_container_width=True):
+                with get_db() as db:
+                    db.execute("INSERT INTO bonus_simulations (employee_code, bonus_type, amount, result_data, created_by) VALUES (?,?,?,?,?)",
+                               (emp_code, bonus_type, bonus_amount, str(result), st.session_state.get('user',{}).get('username','system')))
+                st.success("✅ Simulation saved.")
+
+        with savec3:
+            export_df = pd.DataFrame([
+                {'Metric': 'Bonus Amount', 'Value': bonus_amount, 'After': bonus_amount},
+                {'Metric': 'Net Before', 'Value': result['net_before'], 'After': result['net_after']},
+                {'Metric': 'Gross Before', 'Value': result['gross_before'], 'After': result['gross_after']},
+                {'Metric': 'Tax Before', 'Value': result['tax_before'], 'After': result['tax_after']},
+                {'Metric': 'Company Insurance Before', 'Value': result['comp_ins_before'], 'After': result['comp_ins_after']},
+                {'Metric': 'Company Cost Before', 'Value': result['comp_cost_before'], 'After': result['comp_cost_after']},
+                {'Metric': 'Company Cost Difference', 'Value': 0, 'After': result['comp_cost_diff']},
+            ])
+            export_download_link(export_df, f"bonus_calc_{emp_code}_{year}_{month}.xlsx", "📥 Export to Excel")
 
     st.divider()
     with get_db() as db:
