@@ -420,8 +420,8 @@ def show_documents():
                     with get_db() as db:
                         db.execute("INSERT INTO employee_documents (employee_code, doc_type, file_name, expiry_date, uploaded_by, status) VALUES (?,?,?,?,?,'Valid')",
                                    (emp_code, doc_type, file_name, expiry, st.session_state.get('user', {}).get('username', 'system')))
-                        st.success("Document added.")
-                        st.rerun()
+                    st.success("Document added.")
+                    st.rerun()
 
     if documents:
         df = pd.DataFrame([dict(d) for d in documents])

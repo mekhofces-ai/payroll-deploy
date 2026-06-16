@@ -84,8 +84,8 @@ def show_payroll_run_center():
                 add_audit_log(db, 'Submitted', 'Payroll', 'payroll_runs',
                               f'{year}-{month}', username=st.session_state.get('user',{}).get('username','system'),
                               reason='Payroll submitted for approval')
-                st.success("Submitted for approval.")
-                st.rerun()
+            st.success("Submitted for approval.")
+            st.rerun()
     with col4:
         with get_db() as db:
             run = db.execute("SELECT * FROM payroll_runs WHERE year=? AND month=? ORDER BY id DESC LIMIT 1", (year, month)).fetchone()

@@ -79,8 +79,8 @@ def show_tax_laws():
                     if ex:
                         db.execute("UPDATE tax_exemptions SET personal_exemption_annual=?, additional_exemption_annual=?, tax_free_bracket_annual=? WHERE id=?",
                                   (TAX_LAW_175['personal_exemption'], TAX_LAW_175['additional_exemption'], TAX_LAW_175['tax_free_bracket'], ex['id']))
-                    st.success("Law 175/2023 applied.")
-                    st.rerun()
+            st.success("Law 175/2023 applied.")
+            st.rerun()
     with col2:
         if st.button("📜 Apply Current Tax 2024/2026 Preset"):
             with get_db() as db:
@@ -101,9 +101,9 @@ def show_tax_laws():
                         else:
                             db.execute("INSERT INTO tax_exemptions (tax_law_id, year, personal_exemption_annual, additional_exemption_annual, tax_free_bracket_annual, total_annual_exemption, round_down_to_10, status) VALUES (?,?,?,?,?,?,1,'Active')",
                                       (law['id'], y, TAX_CURRENT['personal_exemption'], TAX_CURRENT['additional_exemption'], TAX_CURRENT['tax_free_bracket'],
-                                       TAX_CURRENT['personal_exemption'] + TAX_CURRENT['additional_exemption'] + TAX_CURRENT['tax_free_bracket']))
-                    st.success("Current tax setup applied.")
-                    st.rerun()
+                                        TAX_CURRENT['personal_exemption'] + TAX_CURRENT['additional_exemption'] + TAX_CURRENT['tax_free_bracket']))
+            st.success("Current tax setup applied.")
+            st.rerun()
 
     st.subheader("Tax Laws")
     for law in laws:

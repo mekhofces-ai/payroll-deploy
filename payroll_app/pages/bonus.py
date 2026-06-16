@@ -154,9 +154,9 @@ def show_calculator():
                                     result['comp_cost_before'], result['comp_cost_after'], result['comp_cost_diff'],
                                     bonus_reason, st.session_state.get('user',{}).get('username','system')))
                         add_audit_log(db, 'Created', 'Bonus', 'employee_bonuses', f"{emp_code} - E£{bonus_amount:,.2f}", st.session_state.get('user',{}).get('username','system'))
-                        st.success("✅ Bonus saved as actual bonus record.")
-                        st.session_state.bonus_result = None
-                        st.rerun()
+                    st.success("✅ Bonus saved as actual bonus record.")
+                    st.session_state.bonus_result = None
+                    st.rerun()
                 except Exception as e:
                     st.error(f"Error saving bonus: {e}")
 
@@ -217,25 +217,26 @@ def show_register():
                 emp_code_q = emp_sel.split(" - ")[0]
                 result = calculate_bonus_cost(emp_code_q, btype, amount, year, 1)
                 if result:
-                    emp = dict(db.execute("SELECT * FROM employees WHERE employee_code=?", (emp_code_q,)).fetchone())
-                    db.execute('''INSERT INTO employee_bonuses (employee_code, arabic_name, organization, sponsor, position,
-                        department, section, default_project, bonus_project, year, month, bonus_type, bonus_category,
-                        bonus_amount_entered, net_bonus_amount, gross_bonus_amount, tax_before, tax_after, tax_diff,
-                        emp_ins_before, emp_ins_after, emp_ins_diff, comp_ins_before, comp_ins_after, comp_ins_diff,
-                        gross_before, gross_after, gross_diff, net_before, net_after, net_increase, comp_cost_before,
-                        comp_cost_after, comp_cost_diff, payment_status, approval_status, created_by)
-                        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'Planned','Draft',?)''',
-                               (emp_code_q, emp['arabic_name'], emp['organization'], emp['sponsor'], emp['position'],
-                                emp['department'], emp['section'], emp['default_project'], emp['default_project'],
-                                year, month if month != "All" else 1, btype, bcat, amount,
-                                result['net_bonus_amount'], result['gross_bonus_amount'],
-                                result['tax_before'], result['tax_after'], result['tax_diff'],
-                                result['emp_ins_before'], result['emp_ins_after'], result['emp_ins_diff'],
-                                result['comp_ins_before'], result['comp_ins_after'], result['comp_ins_diff'],
-                                result['gross_before'], result['gross_after'], result['gross_diff'],
-                                result['net_before'], result['net_after'], result['net_increase'],
-                                result['comp_cost_before'], result['comp_cost_after'], result['comp_cost_diff'],
-                                st.session_state.get('user',{}).get('username','system')))
+                    with get_db() as db:
+                        emp = dict(db.execute("SELECT * FROM employees WHERE employee_code=?", (emp_code_q,)).fetchone())
+                        db.execute('''INSERT INTO employee_bonuses (employee_code, arabic_name, organization, sponsor, position,
+                            department, section, default_project, bonus_project, year, month, bonus_type, bonus_category,
+                            bonus_amount_entered, net_bonus_amount, gross_bonus_amount, tax_before, tax_after, tax_diff,
+                            emp_ins_before, emp_ins_after, emp_ins_diff, comp_ins_before, comp_ins_after, comp_ins_diff,
+                            gross_before, gross_after, gross_diff, net_before, net_after, net_increase, comp_cost_before,
+                            comp_cost_after, comp_cost_diff, payment_status, approval_status, created_by)
+                            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'Planned','Draft',?)''',
+                                   (emp_code_q, emp['arabic_name'], emp['organization'], emp['sponsor'], emp['position'],
+                                    emp['department'], emp['section'], emp['default_project'], emp['default_project'],
+                                    year, month if month != "All" else 1, btype, bcat, amount,
+                                    result['net_bonus_amount'], result['gross_bonus_amount'],
+                                    result['tax_before'], result['tax_after'], result['tax_diff'],
+                                    result['emp_ins_before'], result['emp_ins_after'], result['emp_ins_diff'],
+                                    result['comp_ins_before'], result['comp_ins_after'], result['comp_ins_diff'],
+                                    result['gross_before'], result['gross_after'], result['gross_diff'],
+                                    result['net_before'], result['net_after'], result['net_increase'],
+                                    result['comp_cost_before'], result['comp_cost_after'], result['comp_cost_diff'],
+                                    st.session_state.get('user',{}).get('username','system')))
                     st.success("Bonus added.")
                     st.rerun()
 
@@ -262,8 +263,8 @@ def show_register():
                         if st.button(f"Mark Paid #{b['id']}", key=f"pay_b{b['id']}"):
                             with get_db() as db2:
                                 db2.execute("UPDATE employee_bonuses SET payment_status='Paid', paid_date=datetime('now','localtime') WHERE id=?", (b['id'],))
-                                st.success("Marked paid.")
-                                st.rerun()
+                            st.success("Marked paid.")
+                            st.rerun()
                     with c3:
                         new_status = st.selectbox("Payment Status", ['Planned', 'Approved', 'Paid', 'Cancelled', 'Hold'], key=f"ps_b{b['id']}")
                         if st.button("Update Status", key=f"upd_b{b['id']}"):
