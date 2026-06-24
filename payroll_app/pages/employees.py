@@ -61,10 +61,15 @@ def show_employees():
     with get_db() as db:
         employees = db.execute(query, params).fetchall()
 
-    if st.button("➕ Add Employee"):
-        show_employee_form(None)
+    if 'show_new_emp' not in st.session_state:
+        st.session_state.show_new_emp = False
 
-    if employees:
+    if st.button("➕ Add Employee"):
+        st.session_state.show_new_emp = True
+
+    if st.session_state.show_new_emp:
+        show_employee_form(None)
+    elif employees:
         data = []
         for e in employees:
             d = dict(e)
@@ -187,6 +192,7 @@ def show_employee_form(emp):
                         add_audit_log(db, 'Created', 'Employee', 'employees', code,
                                       username=username, reason='Employee created')
                         st.success(f"Employee {code} added.")
+                        st.session_state.show_new_emp = False
                     except Exception as ex:
                         st.error(f"Error: {ex}")
             st.rerun()
@@ -420,7 +426,9 @@ def show_documents():
                         db.execute("INSERT INTO employee_documents (employee_code, doc_type, file_name, expiry_date, uploaded_by, status) VALUES (?,?,?,?,?,'Valid')",
                                    (emp_code, doc_type, file_name, expiry, st.session_state.get('user', {}).get('username', 'system')))
                     st.success("Document added.")
-                    st.rerun()
+            if emp is None:
+                st.session_state.show_new_emp = False
+            st.rerun()
 
     if documents:
         df = pd.DataFrame([dict(d) for d in documents])
